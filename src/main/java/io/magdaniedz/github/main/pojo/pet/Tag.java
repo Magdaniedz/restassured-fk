@@ -1,4 +1,4 @@
-package io.magdaniedz.github.main.pojo;
+package io.magdaniedz.github.main.pojo.pet;
 
 public class Tag {
 
