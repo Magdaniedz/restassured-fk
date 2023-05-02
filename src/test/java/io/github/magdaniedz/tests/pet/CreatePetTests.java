@@ -2,38 +2,47 @@ package io.github.magdaniedz.tests.pet;
 
 import io.github.magdaniedz.tests.testbases.SuiteTestBase;
 import io.magdaniedz.github.main.pojo.ApiResponse;
-import io.magdaniedz.github.main.pojo.pet.Category;
 import io.magdaniedz.github.main.pojo.pet.Pet;
-import io.magdaniedz.github.main.pojo.pet.Tag;
-import io.magdaniedz.github.main.properties.EnvironmentConfig;
+import io.magdaniedz.github.main.request.configuration.RequestConfigurationBuilder;
 import io.magdaniedz.github.main.test.data.PetTestDataGenerator;
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import org.aeonbits.owner.ConfigFactory;
-import org.testng.annotations.BeforeMethod;
+import org.apache.http.HttpStatus;
+import org.assertj.core.api.Assertions;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
 
 import static io.restassured.RestAssured.given;
-import static org.testng.Assert.assertEquals;
 
 public class CreatePetTests extends SuiteTestBase {
+
+    private Pet actualPet;
+
 
     @Test
     public void givenPetWhenPostPetThenPetThenPetIsCreatedTest() {
 
 
-        PetTestDataGenerator petTestDataGenerator = new PetTestDataGenerator();
-        Pet pet = petTestDataGenerator.generatePet();
+        Pet pet = new PetTestDataGenerator().generatePet();
 
-        Pet actualPet = given().body(pet).contentType("application/json")
+        actualPet  = given().spec(RequestConfigurationBuilder.getDefaultRequestSpecification()).body(pet)
                 .when().post("pet")
-                .then().statusCode(200).extract().as(Pet.class);
+                .then().statusCode(HttpStatus.SC_OK).extract().as(Pet.class);
 
-        assertEquals(actualPet.getId(), pet.getId(), "Pet id");
-        assertEquals(actualPet.getName(), pet.getName(), "Pet name");
+        Assertions.assertThat(actualPet).describedAs("Send Pet was different than received by API").usingRecursiveComparison().isEqualTo(pet);
+    }
 
+
+    @AfterMethod
+    public void cleanUpAfterTest(){
+        ApiResponse apiResponse = given().spec(RequestConfigurationBuilder.getDefaultRequestSpecification())
+                .when().delete("pet/{petId}", actualPet.getId())
+                .then().statusCode(HttpStatus.SC_OK).extract().as(ApiResponse.class);
+
+    ApiResponse expectedApiResponse = new ApiResponse();
+    expectedApiResponse.setCode(200);
+    expectedApiResponse.setType("unknown");
+    expectedApiResponse.setMessage(actualPet.getId().toString());
+
+    Assertions.assertThat(apiResponse).describedAs("API Response from system was not as expected").usingRecursiveComparison().isEqualTo(expectedApiResponse);
     }
 }
