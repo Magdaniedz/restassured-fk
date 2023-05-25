@@ -1,1 +1,1 @@
-## A Java based RestAsssured Automation Framework prepared during JavaStart course(in progress).
+ A Java based RestAsssured Automation Framework prepared during JavaStart course(in progress).
